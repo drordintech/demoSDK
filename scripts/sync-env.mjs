@@ -24,12 +24,12 @@ function loadEnv(path) {
 }
 
 const env = loadEnv(envPath);
-const apiKey = env.DRODIN_API_KEY || env.VITE_DRODIN_API_KEY || '';
-const gateway = env.DRODIN_GATEWAY || env.VITE_DRODIN_GATEWAY || 'http://127.0.0.1:8080';
-const appId = env.DRODIN_APP_ID || env.VITE_DRODIN_APP_ID || '';
+const apiKey = process.env.DRODIN_API_KEY || process.env.VITE_DRODIN_API_KEY || env.DRODIN_API_KEY || env.VITE_DRODIN_API_KEY || '';
+const gateway = process.env.DRODIN_GATEWAY || process.env.VITE_DRODIN_GATEWAY || env.DRODIN_GATEWAY || env.VITE_DRODIN_GATEWAY || 'http://127.0.0.1:8080';
+const appId = process.env.DRODIN_APP_ID || process.env.VITE_DRODIN_APP_ID || env.DRODIN_APP_ID || env.VITE_DRODIN_APP_ID || '';
 
 if (!apiKey) {
-  console.warn('[sync-env] No DRODIN_API_KEY (or VITE_DRODIN_API_KEY) in .env');
+  console.warn('[sync-env] No DRODIN_API_KEY (or VITE_DRODIN_API_KEY) found in process.env or .env');
 }
 
 const environmentTs = `export const environment = {
