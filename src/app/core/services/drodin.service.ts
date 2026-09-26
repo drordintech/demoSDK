@@ -131,16 +131,36 @@ export class DrOdinService {
         this.error.set(err.message);
         this.log(`Error: ${err.message}`);
       });
-      this.sdk.onSessionStart((info) => {
+      this.sdk.onSessionStart((raw) => {
+        const info = this.normalizeSession(raw);
         this.session.set(info);
-        this.log(`Session started ${info.sessionId}`);
+        this.log(`Session started: ${info.sessionId}`);
       });
-      this.sdk.onSessionEnd((info) => {
+      this.sdk.onSessionEnd((raw) => {
+        const info = this.normalizeSession(raw);
         this.session.set(null);
-        this.log(`Session ended ${info.sessionId}`);
+        this.log(`Session ended: ${info?.sessionId || ''}`);
       });
     }
     return this.sdk;
+  }
+
+  private normalizeSession(raw: any): SessionInfo {
+    if (!raw) return raw;
+    const sessionId =
+      raw.sessionId ||
+      raw.session_id ||
+      raw.id ||
+      raw.data?.sessionId ||
+      raw.data?.session_id ||
+      raw.data?.id ||
+      'active';
+    return {
+      ...raw,
+      sessionId,
+      patientName: raw.patientName || raw.patient_name || raw.data?.patientName || '',
+      mobile: raw.mobile || raw.data?.mobile || '',
+    };
   }
 
   private pushReading(reading: LiveReading, message: string) {
@@ -182,7 +202,8 @@ export class DrOdinService {
     try {
       const sdk = this.ensureSdk();
       this.log(`startSession(${payload.patientName}, ${payload.mobile})`);
-      const info = await sdk.startSession({ ...payload, deviceType: this.deviceTypeValue });
+      const raw = await sdk.startSession({ ...payload, deviceType: this.deviceTypeValue });
+      const info = this.normalizeSession(raw);
       this.session.set(info);
       this.phase.set('session');
     } catch (err) {
