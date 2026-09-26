@@ -1,0 +1,8 @@
+{
+  "/api": {
+    "target": "https://api.drodin.in",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}

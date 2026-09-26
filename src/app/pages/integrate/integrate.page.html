@@ -1,0 +1,45 @@
+<div class="page-stack">
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>&#64;dr-odin/web-sdk</h2>
+        <p class="panel-sub">Angular partner integration for BLE medical devices via Dr. Odin gateway.</p>
+      </div>
+    </div>
+    <div class="config-grid">
+      <div class="config-item"><span>Endpoint</span><code>{{ drodin.apiUrl }}</code></div>
+      <div class="config-item">
+        <span>API key</span>
+        <code>{{ drodin.apiKeyConfigured ? 'configured' : 'missing' }}</code>
+      </div>
+      <div class="config-item">
+        <span>BLE</span>
+        <code>{{ drodin.bleSupported() ? 'ok' : 'use Chrome :5180' }}</code>
+      </div>
+      <div class="config-item">
+        <span>Live phase</span>
+        <code>{{ drodin.phase() }}</code>
+      </div>
+    </div>
+  </section>
+
+  <section class="snippets-grid">
+    @for (s of snippets; track s.id) {
+      <article class="panel snippet-card">
+        <div class="panel-head">
+          <h2>{{ s.title }}</h2>
+          <button class="btn ghost" (click)="copy(s.id, s.code)">
+            {{ copied() === s.id ? 'Copied' : 'Copy' }}
+          </button>
+        </div>
+        <pre class="code-block"><code>{{ s.code }}</code></pre>
+      </article>
+    }
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Verify install</h2></div>
+    <pre class="code-block"><code>npm ls &#64;dr-odin/web-sdk
+# expect: &#64;dr-odin/web-sdk&#64;1.0.0 -&gt; ./web-sdk</code></pre>
+  </section>
+</div>

@@ -1,0 +1,77 @@
+@if (devices.loading()) {
+  <div class="loading-state">Initializing MedLink SDK…</div>
+} @else if (devices.error()) {
+  <div class="error-banner">{{ devices.error() }}</div>
+} @else {
+  <div class="page-stack">
+    <section class="stat-row">
+      <article class="stat-block">
+        <div>
+          <p class="stat-label">Online</p>
+          <p class="stat-value">{{ online() }}</p>
+        </div>
+      </article>
+      <article class="stat-block">
+        <div>
+          <p class="stat-label">Offline</p>
+          <p class="stat-value">{{ offline() }}</p>
+        </div>
+      </article>
+      <article class="stat-block">
+        <div>
+          <p class="stat-label">Maintenance</p>
+          <p class="stat-value">{{ maintenance() }}</p>
+        </div>
+      </article>
+      <article class="stat-block">
+        <div>
+          <p class="stat-label">Open alerts</p>
+          <p class="stat-value">{{ alerts().length }}</p>
+        </div>
+      </article>
+    </section>
+
+    <div class="split-grid">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Active devices</h2>
+          <a routerLink="/devices" class="text-link">View all</a>
+        </div>
+        <div class="device-grid">
+          @for (d of devices.devices().slice(0, 4); track d.id) {
+            <app-device-card [device]="d" />
+          }
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Alerts feed</h2></div>
+        @if (alerts().length === 0) {
+          <p class="empty-copy">No open alerts. Network is stable.</p>
+        } @else {
+          <ul class="alert-list">
+            @for (a of alerts(); track a.id) {
+              <li class="alert-item severity-{{ a.severity }}">
+                <div>
+                  <p class="alert-msg">{{ a.message }}</p>
+                  <p class="alert-meta">{{ a.deviceName }} · {{ rel(a.timestamp) }}</p>
+                </div>
+                <a class="text-link" [routerLink]="['/devices', a.deviceId]">Open</a>
+              </li>
+            }
+          </ul>
+        }
+
+        <div class="ward-strip">
+          <h3>By ward</h3>
+          <div class="ward-chips">
+            @for (ward of wards(); track ward) {
+              <span class="ward-chip">{{ ward }} <strong>{{ wardCount(ward) }}</strong></span>
+            }
+          </div>
+          <p class="hint">Types in network: {{ types() }}</p>
+        </div>
+      </section>
+    </div>
+  </div>
+}

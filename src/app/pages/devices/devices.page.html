@@ -1,0 +1,62 @@
+<div class="page-stack">
+  @if (devices.error()) {
+    <div class="error-banner">{{ devices.error() }}</div>
+  }
+
+  <section class="panel integrate-panel">
+    <div class="panel-head">
+      <div>
+        <h2>Discover &amp; integrate</h2>
+        <p class="panel-sub">Scan the local network via demo SDK and connect new hardware.</p>
+      </div>
+      <button class="btn primary" (click)="devices.scan()" [disabled]="devices.scanning()">
+        {{ devices.scanning() ? 'Scanning…' : 'Scan for devices' }}
+      </button>
+    </div>
+
+    @if (devices.scanResults().length > 0) {
+      <div class="scan-grid">
+        @for (r of devices.scanResults(); track r.id) {
+          <article class="scan-card">
+            <div>
+              <p class="device-type">{{ typeLabel(r.type) }}</p>
+              <h3>{{ r.name }}</h3>
+              <p class="scan-meta">
+                {{ r.manufacturer }} · {{ r.model }} · {{ r.protocol }} · signal {{ r.signalStrength }}%
+              </p>
+            </div>
+            <button class="btn secondary" [disabled]="busyId() === r.id" (click)="connect(r.id)">
+              {{ busyId() === r.id ? 'Connecting…' : 'Connect via SDK' }}
+            </button>
+          </article>
+        }
+      </div>
+    } @else {
+      <p class="empty-copy">No pending discoveries. Run a scan to find BLE, Wi-Fi, HL7, and FHIR devices.</p>
+    }
+  </section>
+
+  <section class="panel">
+    <div class="toolbar">
+      <div class="search-field">
+        <input [ngModel]="query()" (ngModelChange)="query.set($event)" placeholder="Search name, ward, serial…" />
+      </div>
+      <div class="filter-pills">
+        @for (s of filters; track s) {
+          <button class="filter-pill" [class.active]="statusFilter() === s" (click)="statusFilter.set(s)">
+            {{ s }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="device-grid">
+      @for (d of filtered(); track d.id) {
+        <app-device-card [device]="d" />
+      }
+    </div>
+    @if (filtered().length === 0) {
+      <p class="empty-copy">No devices match this filter.</p>
+    }
+  </section>
+</div>

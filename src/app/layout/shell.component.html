@@ -1,0 +1,43 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden>◆</div>
+      <div>
+        <p class="brand-name">Dr. Odin</p>
+        <p class="brand-sub">Partner Device Console</p>
+      </div>
+    </div>
+
+    <nav class="side-nav">
+      <a routerLink="/live" routerLinkActive="active" class="nav-item">Live Connect</a>
+      <a routerLink="/integrate" routerLinkActive="active" class="nav-item">SDK Integrate</a>
+    </nav>
+
+    <div class="side-stats">
+      <div class="side-stat" [style.color]="drodin.liveActive() ? 'var(--ok)' : null">
+        <span>{{ drodin.liveActive() ? (drodin.deviceName() || 'BLE live') : 'phase: ' + drodin.phase() }}</span>
+      </div>
+      @if (drodin.session(); as s) {
+        <div class="side-stat">
+          <span>{{ s.patientName }}</span>
+        </div>
+      }
+    </div>
+  </aside>
+
+  <div class="main-pane">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Clinical device network</p>
+        <h1 class="page-title">Medical Devices Dashboard</h1>
+      </div>
+      <div class="topbar-pill">
+        <span class="live-dot"></span>
+        &#64;dr-odin/web-sdk · Angular
+      </div>
+    </header>
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

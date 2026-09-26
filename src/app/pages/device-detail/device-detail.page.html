@@ -1,0 +1,77 @@
+@if (device(); as d) {
+  <div class="page-stack">
+    <a routerLink="/devices" class="back-link">← Devices</a>
+
+    <section class="detail-hero panel">
+      <div>
+        <p class="device-type">{{ typeLabel(d.type) }}</p>
+        <h2>{{ d.name }}</h2>
+        <p class="detail-sub">{{ d.manufacturer }} {{ d.model }} · SN {{ d.serialNumber }}</p>
+        <div class="detail-chips">
+          <app-status-badge [status]="d.status" />
+          <span class="chip">{{ d.ward }}{{ d.bed ? ' · ' + d.bed : '' }}</span>
+          <span class="chip">FW {{ d.firmware }}</span>
+          <span class="chip">Last seen {{ rel(d.lastSeen) }}</span>
+        </div>
+      </div>
+      <button class="btn primary" (click)="toggle()" [disabled]="busy || d.status === 'maintenance'">
+        {{ busy ? 'Working…' : d.status === 'online' ? 'Disconnect' : 'Reconnect via SDK' }}
+      </button>
+    </section>
+
+    <section class="metric-grid">
+      @for (t of tiles(); track t.label) {
+        <app-metric-tile [label]="t.label" [value]="t.value" [unit]="t.unit || ''" [tone]="t.tone" />
+      }
+    </section>
+
+    @if (hrHistory().length > 1 || spo2History().length > 1) {
+      <section class="charts-grid">
+        @if (hrHistory().length > 1) {
+          <div class="panel chart-panel">
+            <div class="panel-head">
+              <h2>Heart rate stream</h2>
+              <span class="chip">{{ hrHistory().at(-1) }} bpm</span>
+            </div>
+            <app-sparkline [values]="hrHistory()" color="#0e7490" />
+          </div>
+        }
+        @if (spo2History().length > 1) {
+          <div class="panel chart-panel">
+            <div class="panel-head">
+              <h2>SpO₂ stream</h2>
+              <span class="chip">{{ spo2History().at(-1) }}%</span>
+            </div>
+            <app-sparkline [values]="spo2History()" color="#0f766e" />
+          </div>
+        }
+      </section>
+    }
+
+    <section class="panel">
+      <div class="panel-head"><h2>Alerts</h2></div>
+      @if (d.alerts.length === 0) {
+        <p class="empty-copy">No alerts for this device.</p>
+      } @else {
+        <ul class="alert-list">
+          @for (a of d.alerts; track a.id) {
+            <li class="alert-item severity-{{ a.severity }}">
+              <div>
+                <p class="alert-msg">{{ a.message }}</p>
+                <p class="alert-meta">{{ clock(a.timestamp) }} · {{ a.acknowledged ? 'Acknowledged' : 'Open' }}</p>
+              </div>
+              @if (!a.acknowledged) {
+                <button class="btn ghost" (click)="devices.acknowledgeAlert(d.id, a.id)">Acknowledge</button>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+} @else {
+  <div class="panel">
+    <p class="empty-copy">Device not found.</p>
+    <a routerLink="/devices" class="text-link">Back to devices</a>
+  </div>
+}

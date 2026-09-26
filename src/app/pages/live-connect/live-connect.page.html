@@ -1,0 +1,171 @@
+<div class="page-stack">
+  @if (!drodin.apiKeyConfigured) {
+    <div class="error-banner">Set <code>DRODIN_API_KEY</code> in <code>.env</code>, then restart <code>npm run dev</code>.</div>
+  }
+  @if (!drodin.bleSupported()) {
+    <div class="error-banner">Web Bluetooth not available. Use Chrome/Edge on HTTPS or localhost (port 5180).</div>
+  }
+  @if (drodin.error()) {
+    <div class="error-banner">{{ drodin.error() }}</div>
+  }
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>Dr. Odin live connect</h2>
+        <p class="panel-sub">Full SDK sequence: initialize → startSession → connect → startMeasurement</p>
+      </div>
+      <span class="status-badge status-{{ phaseBadgeClass() }}">{{ drodin.phase() }}</span>
+    </div>
+    <div class="config-grid">
+      <div class="config-item"><span>API URL</span><code>{{ drodin.apiUrl }}</code></div>
+      <div class="config-item"><span>Package</span><code>&#64;dr-odin/web-sdk</code></div>
+      <div class="config-item"><span>BLE</span><code>{{ drodin.bleSupported() ? 'supported' : 'unavailable' }}</code></div>
+      <div class="config-item"><span>Partner</span><code>{{ drodin.initResult()?.partner?.companyName || '—' }}</code></div>
+    </div>
+  </section>
+
+  <div class="split-grid">
+    <section class="panel">
+      <div class="panel-head"><h2>1. Initialize SDK</h2></div>
+      <button class="btn primary" (click)="drodin.initialize()" [disabled]="busy || !drodin.apiKeyConfigured">
+        {{ drodin.phase() === 'initializing' ? 'Initializing…' : 'initialize()' }}
+      </button>
+
+      <div class="panel-head" style="margin-top: 1.25rem"><h2>2. Patient session</h2></div>
+      <div class="form-grid">
+        <label>
+          Patient name
+          <input [(ngModel)]="patientName" name="patientName" />
+        </label>
+        <label>
+          Mobile (10-digit)
+          <input [(ngModel)]="mobile" name="mobile" />
+        </label>
+        <label>
+          Device type
+          <select
+            [ngModel]="drodin.deviceType()"
+            (ngModelChange)="onDeviceTypeChange($event)"
+            name="deviceType"
+            [disabled]="drodin.phase() === 'connected' || drodin.phase() === 'measuring' || drodin.phase() === 'connecting'"
+          >
+            @for (opt of deviceOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </label>
+      </div>
+      <div class="btn-row" style="margin-top: 0.85rem">
+        <button
+          class="btn secondary"
+          [disabled]="busy || (drodin.phase() !== 'ready' && drodin.phase() !== 'session')"
+          (click)="drodin.startSession({ patientName, mobile })"
+        >
+          startSession()
+        </button>
+        <button
+          class="btn ghost"
+          [disabled]="!drodin.session() || drodin.phase() === 'connecting' || drodin.phase() === 'measuring'"
+          (click)="drodin.endSession()"
+        >
+          endSession()
+        </button>
+      </div>
+      @if (drodin.session(); as s) {
+        <p class="hint">Session <code>{{ s.sessionId }}</code> · {{ s.patientName }} · {{ s.mobile }}</p>
+      }
+
+      <div class="panel-head" style="margin-top: 1.25rem"><h2>3. Bluetooth connect &amp; measure</h2></div>
+      <div class="btn-row">
+        <button
+          class="btn primary"
+          [disabled]="busy || drodin.phase() === 'idle' || drodin.phase() === 'ready' || !drodin.session()"
+          (click)="drodin.connect()"
+        >
+          {{ drodin.phase() === 'connecting' ? 'Connecting…' : 'connect()' }}
+        </button>
+        <button class="btn secondary" [disabled]="drodin.phase() !== 'connected'" (click)="drodin.startMeasurement()">
+          startMeasurement()
+        </button>
+        <button class="btn ghost" [disabled]="drodin.phase() !== 'measuring'" (click)="drodin.stopMeasurement()">
+          stopMeasurement()
+        </button>
+        <button
+          class="btn ghost"
+          [disabled]="drodin.phase() !== 'connected' && drodin.phase() !== 'measuring'"
+          (click)="drodin.disconnect()"
+        >
+          disconnect()
+        </button>
+      </div>
+      @if (drodin.deviceName()) {
+        <p class="hint">Connected device: <strong>{{ drodin.deviceName() }}</strong></p>
+      }
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Live reading</h2></div>
+      @if (drodin.latestReading(); as latest) {
+        @switch (latest.kind) {
+          @case ('spo2') {
+            <div class="live-metrics">
+              <div class="metric-tile tone-ok">
+                <div class="metric-tile-top"><span class="metric-label">SpO₂</span></div>
+                <div class="metric-value">{{ $any(latest.data).spo2 }}<span class="metric-unit">%</span></div>
+              </div>
+              <div class="metric-tile">
+                <div class="metric-tile-top"><span class="metric-label">Pulse</span></div>
+                <div class="metric-value">{{ $any(latest.data).pulseRate }}<span class="metric-unit">bpm</span></div>
+              </div>
+            </div>
+          }
+          @case ('bp') {
+            <div class="live-metrics">
+              <div class="metric-tile tone-ok">
+                <div class="metric-tile-top"><span class="metric-label">Blood pressure</span></div>
+                <div class="metric-value">
+                  {{ $any(latest.data).systolic }}/{{ $any(latest.data).diastolic }}
+                  <span class="metric-unit">mmHg</span>
+                </div>
+              </div>
+            </div>
+          }
+          @default {
+            <p class="hint">{{ readingSummary(latest) }}</p>
+          }
+        }
+      } @else {
+        <p class="empty-copy">No readings yet. Start measurement after BLE connect.</p>
+      }
+
+      <div class="panel-head" style="margin-top: 1.1rem"><h2>Recent readings</h2></div>
+      @if (drodin.readings().length === 0) {
+        <p class="empty-copy">Waiting for device packets…</p>
+      } @else {
+        <ul class="alert-list">
+          @for (r of drodin.readings().slice(0, 8); track $index) {
+            <li class="alert-item severity-info">
+              <div>
+                <p class="alert-msg">{{ r.kind | uppercase }}</p>
+                <p class="alert-meta">{{ readingSummary(r) }}</p>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>SDK log</h2></div>
+    <pre class="playground-log">
+@if (drodin.logs().length === 0) {
+<div>Ready. Click initialize() to begin.</div>
+}
+@for (line of drodin.logs(); track line) {
+<div>{{ line }}</div>
+}
+    </pre>
+  </section>
+</div>

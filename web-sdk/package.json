@@ -1,0 +1,20 @@
+{
+  "name": "@dr-odin/web-sdk",
+  "version": "1.0.1",
+  "description": "Dr. Odin Web Bluetooth medical device SDK",
+  "type": "module",
+  "main": "./dist/dr-odin-sdk.cjs.js",
+  "module": "./dist/dr-odin-sdk.esm.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/dr-odin-sdk.esm.js",
+      "require": "./dist/dr-odin-sdk.cjs.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false
+}
