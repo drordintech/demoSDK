@@ -85,8 +85,10 @@ export class DrOdinService {
     if (!this.apiKeyConfigured) {
       throw new Error('Set DRODIN_API_KEY in .env, then restart npm run dev');
     }
-    // Same-origin baseUrl: Angular dev server (ng serve) or server.mjs proxies /api -> gateway
-    const baseUrl = environment.drodinApiUrl || '';
+    // Use window.location.origin (e.g. http://127.0.0.1:5180 or https://app.onrender.com) so /api is proxied
+    const baseUrl =
+      environment.drodinApiUrl ||
+      (typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1:5180');
 
     if (!this.sdk) {
       this.sdk = new DrOdinSDK({
@@ -185,11 +187,7 @@ export class DrOdinService {
     } catch (err) {
       this.phase.set('error');
       this.sdk = null;
-      const raw = err instanceof Error ? err.message : 'Initialize failed';
-      const message =
-        raw === 'Network Error'
-          ? `Network Error — proxy cannot reach ${environment.drodinGateway}. Confirm Docker is up and proxy.conf.json target is correct.`
-          : raw;
+      const message = err instanceof Error ? err.message : 'Initialize failed';
       this.error.set(message);
       this.log(`initialize failed: ${message}`);
     }
