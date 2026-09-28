@@ -85,10 +85,11 @@ export class DrOdinService {
     if (!this.apiKeyConfigured) {
       throw new Error('Set DRODIN_API_KEY in .env, then restart npm run dev');
     }
-    // Same-origin → Angular proxy → gateway (avoids browser CORS)
+    // Direct gateway communication (supports CORS on Render & local)
     const baseUrl =
       environment.drodinApiUrl ||
-      (typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1:5180');
+      environment.drodinGateway ||
+      'https://api.drodin.in';
 
     if (!this.sdk) {
       this.sdk = new DrOdinSDK({
